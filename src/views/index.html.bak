@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8"> 
+        <meta charset="utf-8">
+        <title>Bootply.com - Bootply Bootstrap Preview</title>
+        <meta name="generator" content="Bootply" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+        <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap.min.css" rel="stylesheet">
+        
+        <!--[if lt IE 9]>
+          <script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+
+        <style type="text/css">
+            /* CSS used here will be applied after bootstrap.css */
+        </style>
+    </head>
+    <body>
+        <div class="container">
+    <div class="container"></div>
+
+<nav class="navbar navbar-default">
+  <div class="container-fluid">
+    <!-- Brand and toggle get grouped for better mobile display -->
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="#">Money Tracker</a>
+    </div>
+
+    <!-- Collect the nav links, forms, and other content for toggling -->
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+      <ul class="nav navbar-nav">
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Accounts <span class="caret"></span></a>
+          <ul class="dropdown-menu" role="menu">
+            <li><a href="#">Action</a></li>
+            <li><a href="#">Another action</a></li>
+            <li><a href="#">Something else here</a></li>
+            <li class="divider"></li>
+            <li><a href="#">Separated link</a></li>
+            <li class="divider"></li>
+            <li><a href="#">One more separated link</a></li>
+          </ul>
+        </li>
+      </ul>
+      <form class="navbar-form navbar-right" role="search">
+        <div class="form-group">
+          <input type="text" class="form-control" placeholder="Search">
+        </div>
+        <button type="submit" class="btn btn-default">Submit</button>
+      </form>
+    </div><!-- /.navbar-collapse -->
+  </div><!-- /.container-fluid -->
+</nav>
+    <h1><div id="accountName">Account Name</div></h1>
+
+    <div class="row">
+        <div class="col-md-8" contenteditable="false" style="">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    	<h3 class="panel-title">This Month</h3>
+
+                </div>
+                <div class="panel-body">
+                    <img src="http://placehold.it/1000x300" class="img-responsive center-block" contenteditable="false" style="">
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6" contenteditable="false" style="">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                  <h3 class="panel-title">Scheduled Payments
+                  	<button class="btn btn-primary btn-xs pull-right">Manage</button>
+                  </h3>
+                </div>
+                <div class="panel-body">
+                    <table class="table table-bordered">
+                        <tbody>
+                            <tr>
+                                <th class="">Day</th>
+                                <th class="">Description</th>
+                                <th class="">Amount</th>                              
+                            </tr>
+                            <tr>
+                                <td class="">Today</td>
+                                <td class="">Mortgage Payment</td>
+                                <td class="text-danger">£671.00</td>                              
+                            </tr>
+                            <tr>
+                                <td class="">Tomorrow</td>
+                                <td class="">Salary</td>
+                                <td class="text-success">£3985.23</td>                              
+                            </tr>                          
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    	<h3 class="panel-title">Quick Stats</h3>
+                </div>
+                <div class="panel-body">
+			<h1><div id="accountCurrentBalance">£0.00</div></h1>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+		Accounts list here
+	</div>
+    </div>
+</div>
+        <script type='text/javascript' src="//ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js"></script>
+        <script type='text/javascript' src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
+        <script type='text/javascript' src="assets/js/waiting.js"></script>
+        <script type='text/javascript' src="assets/js/skint.js"></script>
+    </body>
+</html>

@@ -1,0 +1,24 @@
+{
+  "name": "skint",
+  "version": "0.0.1",
+  "description": "skint.io",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "BSD",
+  "dependencies": {
+    "hapi": "~8.0.0-rc9",
+    "mongoskin": "~1.4.4",
+    "moment": "~2.9.0",
+    "later": "~1.1.6",
+    "jade": "~1.9.0"
+  },
+  "devDependencies": {
+    "grunt": "~0.4.5",
+    "grunt-contrib-uglify": "~0.7.0",
+    "grunt-contrib-coffee": "~0.12.0",
+    "grunt-contrib-watch": "~0.6.1"
+  }
+}
