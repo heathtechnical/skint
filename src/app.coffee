@@ -19,13 +19,13 @@ s.route
     method: 'GET',
     path: '/',
     handler: (request, reply) ->
-        reply.view 'index'
-
-s.route
-    method: 'GET',
-    path: '/main',
-    handler: (request, reply) ->
         reply.view 'main'
+
+#s.route
+#    method: 'GET',
+#    path: '/main',
+#    handler: (request, reply) ->
+#        reply.view 'main'
 
 s.route
     method: 'POST',
