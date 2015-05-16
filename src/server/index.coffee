@@ -1,6 +1,6 @@
 paymentCycle = require '../server/lib/paymentCycle'
 mongo = require 'mongoskin'
-db = mongo.db "mongodb://localhost/skint-mt", native_parser: true
+db = mongo.db "mongodb://localhost/skint-mt-dev", native_parser: true
 db.bind "collection"
 
 exports.register = (server, options, next) ->
@@ -64,65 +64,69 @@ exports.register = (server, options, next) ->
         # Send to client
         reply item
 
-    server.route
-      method: 'POST',
-      path: '/account/{id}/update',
-      handler: (request, reply) ->
-        if request.payload.current_balance
-          db.collection.updateById request.params.id, {
-            $set: {
-            'current_balance': parseFloat(request.payload.current_balance)
-            },
-            $push: {
-            'historic_balance': {
-              'date': new Date(),
-              'balance': parseFloat(request.payload.current_balance)
-            }}}, {}, () -> reply { done: "success" }
-        else if request.payload.payment_cycle_day
-          db.collection.updateById request.params.id, {
-            $set: {
-              'payment_cycle_day': parseInt(request.payload.payment_cycle_day)
-            }}, {}, () -> reply { done: "success" }
-        else if request.payload.add_payment
-          update = {
-            'id': mongo.ObjectID()
-            'type': request.payload.add_payment.type,
-            'description': request.payload.add_payment.description,
-            'amount': parseFloat(request.payload.add_payment.amount),
-            'last_modified': new Date()
-          }
+  server.route
+    method: 'POST',
+    path: '/account/{id}/update',
+    handler: (request, reply) ->
+      if request.payload.current_balance
+        db.collection.updateById request.params.id, {
+          $set: {
+          'current_balance': parseFloat(request.payload.current_balance)
+          },
+          $push: {
+          'historic_balance': {
+            'date': new Date(),
+            'balance': parseFloat(request.payload.current_balance)
+          }}}, {}, () -> reply { done: "success" }
+      else if request.payload.payment_cycle_day
+        db.collection.updateById request.params.id, {
+          $set: {
+            'payment_cycle_day': parseInt(request.payload.payment_cycle_day)
+          }}, {}, () -> reply { done: "success" }
+      else if request.payload.add_payment
+        update = {
+          'id': mongo.ObjectID()
+          'type': request.payload.add_payment.type,
+          'description': request.payload.add_payment.description,
+          'amount': parseFloat(request.payload.add_payment.amount),
+          'last_modified': new Date()
+        }
 
-          if request.payload.add_payment.type == "scheduled"
-            update.day = parseInt(request.payload.add_payment.day)
-        
-          db.collection.updateById request.params.id, {
-            $push: 'payments': update }, {}, (err) -> reply { done: "success" }
+        if request.payload.add_payment.type == "scheduled"
+          update.day = parseInt(request.payload.add_payment.day)
+      
+        db.collection.updateById request.params.id, {
+          $push: 'payments': update }, {}, (err) -> reply { done: "success" }
 
-        else if request.payload.delete_payment
-          payment = {
-            id: mongo.helper.toObjectID(request.payload.delete_payment.id)
-          }
+      else if request.payload.delete_payment
+        payment = {
+          id: mongo.helper.toObjectID(request.payload.delete_payment.id)
+        }
 
-          console.log payment
+        console.log payment
 
-          db.collection.updateById request.params.id, {
-            $pull: 'payments': payment }, {}, (err) -> reply { done: "success" }
+        db.collection.updateById request.params.id, {
+          $pull: 'payments': payment }, {}, (err) -> reply { done: "success" }
 
-        else if request.payload.update_payment
-          update = {
-            'payments.$.description': request.payload.update_payment.description,
-            'payments.$.amount': parseFloat(request.payload.update_payment.amount)
-          }
+      else if request.payload.update_payment
+        update = {
+          'payments.$.description': request.
+            payload.update_payment.description,
+          'payments.$.amount': parseFloat(request.
+            payload.update_payment.amount)
+        }
 
-          if request.payload.update_payment.type == "scheduled"
-            update['payments.$.day'] = parseInt(request.payload.update_payment.day)
+        if request.payload.update_payment.type == "scheduled"
+          update['payments.$.day'] = parseInt(request.
+            payload.update_payment.day)
 
-          db.collection.update({
-            '_id': mongo.helper.toObjectID(request.params.id),
-            "payments.id": mongo.helper.toObjectID(request.payload.update_payment.id)
-          }, {
-            $set: update
-          }, (err) -> reply { done: "success" } )
+        db.collection.update({
+          '_id': mongo.helper.toObjectID(request.params.id),
+          "payments.id": mongo.helper.toObjectID(request.
+            payload.update_payment.id)
+        }, {
+          $set: update
+        }, (err) -> reply { done: "success" } )
 
   server.route
     method: 'GET',

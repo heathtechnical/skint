@@ -5,7 +5,7 @@
 
   mongo = require('mongoskin');
 
-  db = mongo.db("mongodb://localhost/skint-mt", {
+  db = mongo.db("mongodb://localhost/skint-mt-dev", {
     native_parser: true
   });
 

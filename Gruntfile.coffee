@@ -4,7 +4,7 @@ module.exports = (grunt) ->
         pkg: grunt.file.readJSON("package.json")
 
         coffeelint:
-          server: [ 'src/server/*.coffee' ]
+          server: [ 'src/server/*.coffee', 'src/test/*.coffee' ]
 
         coffee:
             server:
@@ -27,6 +27,12 @@ module.exports = (grunt) ->
                 dest: 'server/lib'
                 ext: '.js'
 
+            test:
+                expand: true
+                cwd: 'src/test'
+                src: [ '*.coffee' ]
+                dest: 'test/'
+                ext: '.js'
 
     grunt.loadNpmTasks "grunt-contrib-coffee"
     grunt.loadNpmTasks "grunt-coffeelint"
