@@ -1,9 +1,11 @@
 (function() {
-  var db, mongo, paymentCycle;
+  var Boom, db, mongo, paymentCycle;
 
   paymentCycle = require('../server/lib/paymentCycle');
 
   mongo = require('mongoskin');
+
+  Boom = require('boom');
 
   db = mongo.db("mongodb://localhost/skint-mt-dev", {
     native_parser: true
@@ -23,6 +25,9 @@
       method: 'POST',
       path: '/account',
       handler: function(request, reply) {
+        if (!request.payload.account_name) {
+          return reply(Boom.badRequest("No account name"));
+        }
         return db.collection.insert({
           name: request.payload.account_name,
           payment_cycle_day: 1,
@@ -30,6 +35,9 @@
           current_balance: 0,
           historic_balance: []
         }, function(err, docs) {
+          if (err) {
+            return reply(Boom.badRequest("Database error"));
+          }
           return reply({
             "success": "yes",
             "account_id": docs[0]['_id']
@@ -56,6 +64,12 @@
       handler: function(request, reply) {
         return db.collection.findById(request.params.id, function(err, item) {
           var payment, pc, st, _fn, _fn1, _i, _j, _len, _len1, _ref, _ref1;
+          if (err) {
+            return reply(Boom.badRequest("Database error"));
+          }
+          if (!item) {
+            return reply(Boom.badRequest("Not found"));
+          }
           pc = new paymentCycle(item.payment_cycle_day);
           _ref = item.payments;
           _fn = function(payment) {

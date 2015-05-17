@@ -1,19 +1,28 @@
 paymentCycle = require '../server/lib/paymentCycle'
 mongo = require 'mongoskin'
+Boom = require 'boom'
+
 db = mongo.db "mongodb://localhost/skint-mt-dev", native_parser: true
 db.bind "collection"
 
 exports.register = (server, options, next) ->
+  # GET /
+  # Render main template
   server.route
     method: 'GET',
     path: '/',
     handler: (request, reply) ->
       reply.view 'main'
-
+  
+  # POST /account { account_name }
+  # Create a new account
   server.route
     method: 'POST',
     path: '/account',
     handler: (request, reply) ->
+      if not request.payload.account_name
+        return reply Boom.badRequest "No account name"
+
       db.collection.insert {
       name: request.payload.account_name,
       payment_cycle_day: 1,
@@ -21,7 +30,10 @@ exports.register = (server, options, next) ->
       current_balance: 0,
       historic_balance: [] },
       (err, docs) ->
-        reply { "success": "yes", "account_id": docs[0]['_id'] }
+        if err
+          return reply Boom.badRequest "Database error"
+
+        return reply { "success": "yes", "account_id": docs[0]['_id'] }
 
   server.route
     method: 'GET',
@@ -31,11 +43,16 @@ exports.register = (server, options, next) ->
       .toArray (err, items) ->
         reply items
 
+  # GET /account/{id}
+  # Return account data for given account id
   server.route
     method: 'GET',
     path: '/account/{id}',
     handler: (request, reply) ->
       db.collection.findById request.params.id, (err, item) ->
+        return reply Boom.badRequest "Database error" if err
+        return reply Boom.badRequest "Not found" if not item
+
         # Setup new payment cycle
         pc = new paymentCycle(item.payment_cycle_day)
         for payment in item.payments then do (payment) ->
@@ -62,8 +79,10 @@ exports.register = (server, options, next) ->
             item.quickstats.estimated_closing_balance += payment.amount
 
         # Send to client
-        reply item
+        return reply item
 
+  # POST /account/{id}/update
+  # Update an account balance, payment cycle date, and payments
   server.route
     method: 'POST',
     path: '/account/{id}/update',
@@ -103,8 +122,6 @@ exports.register = (server, options, next) ->
           id: mongo.helper.toObjectID(request.payload.delete_payment.id)
         }
 
-        console.log payment
-
         db.collection.updateById request.params.id, {
           $pull: 'payments': payment }, {}, (err) -> reply { done: "success" }
 
@@ -128,13 +145,13 @@ exports.register = (server, options, next) ->
           $set: update
         }, (err) -> reply { done: "success" } )
 
+  # GET /account/{id}/chart
+  # Return data required for graph
   server.route
     method: 'GET',
     path: '/account/{id}/chart',
     handler: (request, reply) ->
-      console.log "Fetching ID: " + request.params.id
       db.collection.findById request.params.id, (err, item) ->
-        console.log item
         return reply { done: "success" }
 
   next()
