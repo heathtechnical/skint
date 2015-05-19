@@ -13,6 +13,12 @@ exports.register = (server, options, next) ->
     path: '/',
     handler: (request, reply) ->
       reply.view 'main'
+
+  server.route
+    method: 'GET',
+    path: '/2',
+    handler: (request, reply) ->
+      reply.view 'main2'
   
   # POST /account { account_name }
   # Create a new account
@@ -81,69 +87,116 @@ exports.register = (server, options, next) ->
         # Send to client
         return reply item
 
-  # POST /account/{id}/update
-  # Update an account balance, payment cycle date, and payments
   server.route
-    method: 'POST',
-    path: '/account/{id}/update',
+    method: 'POST'
+    path: '/account/{id}/update/balance'
     handler: (request, reply) ->
-      if request.payload.current_balance
-        db.collection.updateById request.params.id, {
-          $set: {
-          'current_balance': parseFloat(request.payload.current_balance)
-          },
-          $push: {
-          'historic_balance': {
-            'date': new Date(),
-            'balance': parseFloat(request.payload.current_balance)
-          }}}, {}, () -> reply { done: "success" }
-      else if request.payload.payment_cycle_day
-        db.collection.updateById request.params.id, {
-          $set: {
-            'payment_cycle_day': parseInt(request.payload.payment_cycle_day)
-          }}, {}, () -> reply { done: "success" }
-      else if request.payload.add_payment
-        update = {
-          'id': mongo.ObjectID()
-          'type': request.payload.add_payment.type,
-          'description': request.payload.add_payment.description,
-          'amount': parseFloat(request.payload.add_payment.amount),
-          'last_modified': new Date()
-        }
+      return reply Boom.badRequest "No balance provided" if not
+        request.payload.current_balance
 
-        if request.payload.add_payment.type == "scheduled"
-          update.day = parseInt(request.payload.add_payment.day)
+      db.collection.updateById request.params.id, {
+        $set: {
+        'current_balance': parseFloat(request.payload.current_balance)
+        },
+        $push: {
+        'historic_balance': {
+          'date': new Date(),
+          'balance': parseFloat(request.payload.current_balance)
+        }}}, {}, (err, mods) ->
+          return reply Boom.badRequest "Database error" if err or
+            mods != 1
+
+          return reply { done: "success" }
+
+  server.route
+    method: 'POST'
+    path: '/account/{id}/update/payment_cycle_day'
+    handler: (request, reply) ->
+      return reply Boom.badRequest "No payment cycle day provided" if not
+        request.payload.payment_cycle_day
+
+      db.collection.updateById request.params.id, {
+        $set: {
+          'payment_cycle_day': parseInt(request.payload.payment_cycle_day)
+        }}, {}, (err, mods) ->
+          return reply Boom.badRequest "Database error" if err or
+            mods != 1
+
+          return reply { done: "success" }
+
+  server.route
+    method: 'POST'
+    path: '/account/{id}/update/add_payment'
+    handler: (request, reply) ->
+      return reply Boom.badRequest "No payment information provided" if not
+        request.payload.type or not
+        request.payload.description or not
+        request.payload.amount
+
+      update = {
+        'id': mongo.ObjectID()
+        'type': request.payload.type,
+        'description': request.payload.description,
+        'amount': parseFloat(request.payload.amount),
+        'last_modified': new Date()
+      }
+
+      if request.payload.type == "scheduled"
+        update.day = parseInt(request.payload.day)
       
-        db.collection.updateById request.params.id, {
-          $push: 'payments': update }, {}, (err) -> reply { done: "success" }
+      db.collection.updateById request.params.id, {
+        $push: 'payments': update }, {}, (err, mods) ->
+          return reply Boom.badRequest "Database error" if err or
+            mods != 1
 
-      else if request.payload.delete_payment
-        payment = {
-          id: mongo.helper.toObjectID(request.payload.delete_payment.id)
-        }
+          return reply { done: "success" }
 
-        db.collection.updateById request.params.id, {
-          $pull: 'payments': payment }, {}, (err) -> reply { done: "success" }
+  server.route
+    method: 'POST'
+    path: '/account/{id}/update/delete_payment'
+    handler: (request, reply) ->
+      return reply Boom.badRequest "No payment id provided" if not
+        request.payload.id
 
-      else if request.payload.update_payment
-        update = {
-          'payments.$.description': request.
-            payload.update_payment.description,
-          'payments.$.amount': parseFloat(request.
-            payload.update_payment.amount)
-        }
+      payment = {
+        id: mongo.helper.toObjectID(request.payload.id)
+      }
 
-        if request.payload.update_payment.type == "scheduled"
-          update['payments.$.day'] = parseInt(request.
-            payload.update_payment.day)
+      db.collection.updateById request.params.id, {
+        $pull: 'payments': payment }, {}, (err, mods) ->
+          return reply Boom.badRequest "Database error" if err or
+            mods != 1
 
-        db.collection.update({
-          '_id': mongo.helper.toObjectID(request.params.id),
-          "payments.id": mongo.helper.toObjectID(request.
-            payload.update_payment.id)
-        }, {
-          $set: update
-        }, (err) -> reply { done: "success" } )
+          return reply { done: "success" }
+
+  server.route
+    method: 'POST'
+    path: '/account/{id}/update/update_payment'
+    handler: (request, reply) ->
+      return reply Boom.badRequest "No payment information provided" if not
+        request.payload.description or not
+        request.payload.amount or not
+        request.payload.day or not
+        request.payload.id
+
+      update = {
+        'payments.$.description': request.payload.description,
+        'payments.$.amount': parseFloat(request.payload.amount)
+      }
+
+      if request.payload.type == "scheduled"
+        update['payments.$.day'] = parseInt(request.payload.day)
+
+      db.collection.update {
+        '_id': mongo.helper.toObjectID(request.params.id),
+        "payments.id": mongo.helper.toObjectID(request.payload.id)
+      }, {
+        $set: update
+      }, (err, mods) ->
+          return reply Boom.badRequest "Database error" if err or
+            mods != 1
+
+          return reply { done: "success" }
 
   # GET /account/{id}/chart
   # Return data required for graph

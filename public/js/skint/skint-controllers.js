@@ -1,7 +1,7 @@
 (function() {
   var skApp;
 
-  skApp = angular.module('skApp', ['ngCookies']).config(function($interpolateProvider) {
+  skApp = angular.module('skApp', ['ngCookies', 'ui-bootstrap']).config(function($interpolateProvider) {
     return $interpolateProvider.startSymbol('{[{').endSymbol('}]}');
   });
 
@@ -30,21 +30,19 @@
       });
     };
     $scope.deletePayment = function(payment) {
-      return $http.post("/account/" + $scope.accountID + "/update", {
-        delete_payment: payment
-      }).success(function() {
+      return $http.post("/account/" + $scope.accountID + "/update/delete_payment", payment).success(function() {
         return $scope.refresh();
       });
     };
     $scope.updatePaymentCycleDay = function(day) {
-      return $http.post("/account/" + $scope.accountID + "/update", {
+      return $http.post("/account/" + $scope.accountID + "/update/payment_cycle_day", {
         payment_cycle_day: day
       }).success(function() {
         return $scope.refresh();
       });
     };
     $scope.updateCurrentBalance = function(balance) {
-      return $http.post("/account/" + $scope.accountID + "/update", {
+      return $http.post("/account/" + $scope.accountID + "/update/balance", {
         current_balance: balance
       }).success(function() {
         return $scope.refresh();
@@ -55,19 +53,16 @@
       return $scope.refresh();
     };
     $scope.editPayment = function(payment) {
-      angular.forEach($scope.account.scheduled_payments, function(opayment) {
+      angular.forEach($scope.account.payments, function(opayment) {
         return opayment.editMode = false;
       });
-      $scope.newPayment = payment;
       return payment.editMode = true;
     };
     $scope.saveEditPayment = function(payment) {
-      angular.forEach($scope.account.scheduled_payments, function(opayment) {
+      angular.forEach($scope.account.payments, function(opayment) {
         return opayment.editMode = false;
       });
-      return $http.post("/account/" + $scope.accountID + "/update", {
-        update_payment: payment
-      }).success(function() {
+      return $http.post("/account/" + $scope.accountID + "/update/update_payment", payment).success(function() {
         return $scope.refresh();
       });
     };
@@ -82,20 +77,19 @@
           type: "scheduled"
         };
         scope.addPaymentButton = function(payment) {
-          return $http.post("/account/" + scope.accountID + "/update", {
-            add_payment: payment
-          }).success(function() {
+          return $http.post("/account/" + scope.accountID + "/update/add_payment", payment).success(function() {
             scope.refresh();
             return $(element).popover('toggle');
           });
         };
-        return $(element).popover({
+        $(element).popover({
           container: "body",
           content: $compile($templateCache.get("addPaymentPopover.html"))(scope),
           title: "Add Payment",
           placement: "right",
           html: true
         });
+        return $(element).toggle();
       }
     };
   });
@@ -182,9 +176,6 @@
             },
             title: {
               text: 'Snow depth at Vikjafjellet, Norway'
-            },
-            subtitle: {
-              text: 'Irregular time data in Highcharts JS'
             },
             xAxis: {
               type: 'datetime',

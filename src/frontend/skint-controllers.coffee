@@ -1,4 +1,4 @@
-skApp = angular.module('skApp', ['ngCookies']).config ($interpolateProvider) ->
+skApp = angular.module('skApp', ['ngCookies', 'ui-bootstrap']).config ($interpolateProvider) ->
     $interpolateProvider.startSymbol('{[{').endSymbol('}]}')
 
 skApp.controller 'skMoneyTracker', ($scope, $http, $cookieStore, $rootScope) ->
@@ -27,21 +27,20 @@ skApp.controller 'skMoneyTracker', ($scope, $http, $cookieStore, $rootScope) ->
                 $scope.currentBalance = $scope.account.current_balance
 
     $scope.deletePayment = (payment) ->
-        $http.post("/account/" + $scope.accountID + "/update", {
-            delete_payment: payment
-        }).success(() ->
+        $http.post("/account/" + $scope.accountID + "/update/delete_payment", payment).
+          success(() ->
             $scope.refresh()
-        )
+          )
 
     $scope.updatePaymentCycleDay = (day) ->
-        $http.post("/account/" + $scope.accountID + "/update", {
+        $http.post("/account/" + $scope.accountID + "/update/payment_cycle_day", {
             payment_cycle_day: day
         }).success(() ->
             $scope.refresh()
         )
 
     $scope.updateCurrentBalance = (balance) ->
-        $http.post("/account/" + $scope.accountID + "/update", {
+        $http.post("/account/" + $scope.accountID + "/update/balance", {
             current_balance: balance
         }).success(() ->
             $scope.refresh()
@@ -52,18 +51,16 @@ skApp.controller 'skMoneyTracker', ($scope, $http, $cookieStore, $rootScope) ->
         $scope.refresh()
 
     $scope.editPayment = (payment) ->
-        angular.forEach($scope.account.scheduled_payments, (opayment) -> opayment.editMode = false)
-        $scope.newPayment = payment
+        angular.forEach($scope.account.payments, (opayment) -> opayment.editMode = false)
         payment.editMode = true
 
     $scope.saveEditPayment = (payment) ->
-        angular.forEach($scope.account.scheduled_payments, (opayment) -> opayment.editMode = false)
+        angular.forEach($scope.account.payments, (opayment) -> opayment.editMode = false)
 
-        $http.post("/account/" + $scope.accountID + "/update", {
-            update_payment: payment
-        }).success(() ->
+        $http.post("/account/" + $scope.accountID + "/update/update_payment", payment).
+          success(() ->
             $scope.refresh()
-        )
+          )
 
     $scope.refresh()
 
@@ -75,12 +72,11 @@ skApp.directive 'skAddPaymentPopover', ($compile, $templateCache, $http, $rootSc
                 type: "scheduled"
 
             scope.addPaymentButton = (payment) ->
-                $http.post("/account/" + scope.accountID + "/update", {
-                    add_payment: payment
-                }).success(() ->
+                $http.post("/account/" + scope.accountID + "/update/add_payment", payment).
+                  success(() ->
                     scope.refresh()
                     $(element).popover('toggle')
-                )
+                  )
 
             $(element).popover
                 container: "body"
@@ -88,6 +84,8 @@ skApp.directive 'skAddPaymentPopover', ($compile, $templateCache, $http, $rootSc
                 title: "Add Payment"
                 placement: "right"
                 html: true
+
+            $(element).toggle()
     }
 
 skApp.directive 'skAddAccountPopover', ($compile, $templateCache, $http, $rootScope) ->
@@ -158,7 +156,6 @@ skApp.directive 'skAccountChart', ($compile, $http, $timeout) ->
                 $(element).highcharts({
                     chart: { type: 'spline' },
                     title: { text: 'Snow depth at Vikjafjellet, Norway' },
-                    subtitle: { text: 'Irregular time data in Highcharts JS' },
                     xAxis: {
                         type: 'datetime',
                         dateTimeLabelFormats: {

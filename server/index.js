@@ -22,6 +22,13 @@
       }
     });
     server.route({
+      method: 'GET',
+      path: '/2',
+      handler: function(request, reply) {
+        return reply.view('main2');
+      }
+    });
+    server.route({
       method: 'POST',
       path: '/account',
       handler: function(request, reply) {
@@ -111,97 +118,144 @@
     });
     server.route({
       method: 'POST',
-      path: '/account/{id}/update',
+      path: '/account/{id}/update/balance',
       handler: function(request, reply) {
-        var payment, update;
-        if (request.payload.current_balance) {
-          return db.collection.updateById(request.params.id, {
-            $set: {
-              'current_balance': parseFloat(request.payload.current_balance)
-            },
-            $push: {
-              'historic_balance': {
-                'date': new Date(),
-                'balance': parseFloat(request.payload.current_balance)
-              }
-            }
-          }, {}, function() {
-            return reply({
-              done: "success"
-            });
-          });
-        } else if (request.payload.payment_cycle_day) {
-          return db.collection.updateById(request.params.id, {
-            $set: {
-              'payment_cycle_day': parseInt(request.payload.payment_cycle_day)
-            }
-          }, {}, function() {
-            return reply({
-              done: "success"
-            });
-          });
-        } else if (request.payload.add_payment) {
-          update = {
-            'id': mongo.ObjectID(),
-            'type': request.payload.add_payment.type,
-            'description': request.payload.add_payment.description,
-            'amount': parseFloat(request.payload.add_payment.amount),
-            'last_modified': new Date()
-          };
-          if (request.payload.add_payment.type === "scheduled") {
-            update.day = parseInt(request.payload.add_payment.day);
-          }
-          return db.collection.updateById(request.params.id, {
-            $push: {
-              'payments': update
-            }
-          }, {}, function(err) {
-            return reply({
-              done: "success"
-            });
-          });
-        } else if (request.payload.delete_payment) {
-          payment = {
-            id: mongo.helper.toObjectID(request.payload.delete_payment.id)
-          };
-          console.log(payment);
-          return db.collection.updateById(request.params.id, {
-            $pull: {
-              'payments': payment
-            }
-          }, {}, function(err) {
-            return reply({
-              done: "success"
-            });
-          });
-        } else if (request.payload.update_payment) {
-          update = {
-            'payments.$.description': request.payload.update_payment.description,
-            'payments.$.amount': parseFloat(request.payload.update_payment.amount)
-          };
-          if (request.payload.update_payment.type === "scheduled") {
-            update['payments.$.day'] = parseInt(request.payload.update_payment.day);
-          }
-          return db.collection.update({
-            '_id': mongo.helper.toObjectID(request.params.id),
-            "payments.id": mongo.helper.toObjectID(request.payload.update_payment.id)
-          }, {
-            $set: update
-          }, function(err) {
-            return reply({
-              done: "success"
-            });
-          });
+        if (!request.payload.current_balance) {
+          return reply(Boom.badRequest("No balance provided"));
         }
+        return db.collection.updateById(request.params.id, {
+          $set: {
+            'current_balance': parseFloat(request.payload.current_balance)
+          },
+          $push: {
+            'historic_balance': {
+              'date': new Date(),
+              'balance': parseFloat(request.payload.current_balance)
+            }
+          }
+        }, {}, function(err, mods) {
+          if (err || mods !== 1) {
+            return reply(Boom.badRequest("Database error"));
+          }
+          return reply({
+            done: "success"
+          });
+        });
+      }
+    });
+    server.route({
+      method: 'POST',
+      path: '/account/{id}/update/payment_cycle_day',
+      handler: function(request, reply) {
+        if (!request.payload.payment_cycle_day) {
+          return reply(Boom.badRequest("No payment cycle day provided"));
+        }
+        return db.collection.updateById(request.params.id, {
+          $set: {
+            'payment_cycle_day': parseInt(request.payload.payment_cycle_day)
+          }
+        }, {}, function(err, mods) {
+          if (err || mods !== 1) {
+            return reply(Boom.badRequest("Database error"));
+          }
+          return reply({
+            done: "success"
+          });
+        });
+      }
+    });
+    server.route({
+      method: 'POST',
+      path: '/account/{id}/update/add_payment',
+      handler: function(request, reply) {
+        var update;
+        if (!request.payload.type || !request.payload.description || !request.payload.amount) {
+          return reply(Boom.badRequest("No payment information provided"));
+        }
+        update = {
+          'id': mongo.ObjectID(),
+          'type': request.payload.type,
+          'description': request.payload.description,
+          'amount': parseFloat(request.payload.amount),
+          'last_modified': new Date()
+        };
+        if (request.payload.type === "scheduled") {
+          update.day = parseInt(request.payload.day);
+        }
+        return db.collection.updateById(request.params.id, {
+          $push: {
+            'payments': update
+          }
+        }, {}, function(err, mods) {
+          if (err || mods !== 1) {
+            return reply(Boom.badRequest("Database error"));
+          }
+          return reply({
+            done: "success"
+          });
+        });
+      }
+    });
+    server.route({
+      method: 'POST',
+      path: '/account/{id}/update/delete_payment',
+      handler: function(request, reply) {
+        var payment;
+        if (!request.payload.id) {
+          return reply(Boom.badRequest("No payment id provided"));
+        }
+        payment = {
+          id: mongo.helper.toObjectID(request.payload.id)
+        };
+        return db.collection.updateById(request.params.id, {
+          $pull: {
+            'payments': payment
+          }
+        }, {}, function(err, mods) {
+          if (err || mods !== 1) {
+            return reply(Boom.badRequest("Database error"));
+          }
+          return reply({
+            done: "success"
+          });
+        });
+      }
+    });
+    server.route({
+      method: 'POST',
+      path: '/account/{id}/update/update_payment',
+      handler: function(request, reply) {
+        var update;
+        if (!request.payload.description || !request.payload.amount || !request.payload.day || !request.payload.id) {
+          return reply(Boom.badRequest("No payment information provided"));
+        }
+        update = {
+          'payments.$.description': request.payload.description,
+          'payments.$.amount': parseFloat(request.payload.amount)
+        };
+        if (request.payload.type === "scheduled") {
+          update['payments.$.day'] = parseInt(request.payload.day);
+        }
+        return db.collection.update({
+          '_id': mongo.helper.toObjectID(request.params.id),
+          "payments.id": mongo.helper.toObjectID(request.payload.id)
+        }, {
+          $set: update
+        }, function(err, mods) {
+          if (err || mods !== 1) {
+            return reply(Boom.badRequest("Database error"));
+          }
+          return reply({
+            done: "success"
+          });
+        });
       }
     });
     server.route({
       method: 'GET',
       path: '/account/{id}/chart',
       handler: function(request, reply) {
-        console.log("Fetching ID: " + request.params.id);
         return db.collection.findById(request.params.id, function(err, item) {
-          console.log(item);
           return reply({
             done: "success"
           });
