@@ -1,11 +1,13 @@
 (function() {
-  var Boom, db, mongo, paymentCycle;
+  var Boom, db, mongo, paymentCycle, util;
 
   paymentCycle = require('../server/lib/paymentCycle');
 
   mongo = require('mongoskin');
 
   Boom = require('boom');
+
+  util = require('util');
 
   db = mongo.db("mongodb://localhost/skint-mt-dev", {
     native_parser: true
@@ -22,22 +24,15 @@
       }
     });
     server.route({
-      method: 'GET',
-      path: '/2',
-      handler: function(request, reply) {
-        return reply.view('main2');
-      }
-    });
-    server.route({
       method: 'POST',
       path: '/account',
       handler: function(request, reply) {
-        if (!request.payload.account_name) {
+        if (!request.payload.account_name || !request.payload.payment_cycle_day) {
           return reply(Boom.badRequest("No account name"));
         }
         return db.collection.insert({
           name: request.payload.account_name,
-          payment_cycle_day: 1,
+          payment_cycle_day: request.payload.payment_cycle_day,
           payments: [],
           current_balance: 0,
           historic_balance: []
@@ -113,6 +108,27 @@
             _fn1(payment);
           }
           return reply(item);
+        });
+      }
+    });
+    server.route({
+      method: 'POST',
+      path: '/account/{id}/update/account_name',
+      handler: function(request, reply) {
+        if (!request.payload.account_name) {
+          return reply(Boom.badRequest("No account name provided"));
+        }
+        return db.collection.updateById(request.params.id, {
+          $set: {
+            'name': request.payload.account_name
+          }
+        }, {}, function(err, mods) {
+          if (err || mods !== 1) {
+            return reply(Boom.badRequest("Database error"));
+          }
+          return reply({
+            done: "success"
+          });
         });
       }
     });
@@ -226,7 +242,7 @@
       path: '/account/{id}/update/update_payment',
       handler: function(request, reply) {
         var update;
-        if (!request.payload.description || !request.payload.amount || !request.payload.day || !request.payload.id) {
+        if (!request.payload.description || !request.payload.amount || !request.payload.id) {
           return reply(Boom.badRequest("No payment information provided"));
         }
         update = {

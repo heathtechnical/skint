@@ -1,6 +1,7 @@
 paymentCycle = require '../server/lib/paymentCycle'
 mongo = require 'mongoskin'
 Boom = require 'boom'
+util = require 'util'
 
 db = mongo.db "mongodb://localhost/skint-mt-dev", native_parser: true
 db.bind "collection"
@@ -14,24 +15,19 @@ exports.register = (server, options, next) ->
     handler: (request, reply) ->
       reply.view 'main'
 
-  server.route
-    method: 'GET',
-    path: '/2',
-    handler: (request, reply) ->
-      reply.view 'main2'
-  
   # POST /account { account_name }
   # Create a new account
   server.route
     method: 'POST',
     path: '/account',
     handler: (request, reply) ->
-      if not request.payload.account_name
-        return reply Boom.badRequest "No account name"
+      return reply Boom.badRequest "No account name" if not
+        request.payload.account_name or not
+        request.payload.payment_cycle_day
 
       db.collection.insert {
       name: request.payload.account_name,
-      payment_cycle_day: 1,
+      payment_cycle_day: request.payload.payment_cycle_day,
       payments: [],
       current_balance: 0,
       historic_balance: [] },
@@ -86,6 +82,22 @@ exports.register = (server, options, next) ->
 
         # Send to client
         return reply item
+
+  server.route
+    method: 'POST'
+    path: '/account/{id}/update/account_name'
+    handler: (request, reply) ->
+      return reply Boom.badRequest "No account name provided" if not
+        request.payload.account_name
+
+      db.collection.updateById request.params.id, {
+        $set: {
+        'name': request.payload.account_name
+        }}, {}, (err, mods) ->
+          return reply Boom.badRequest "Database error" if err or
+            mods != 1
+
+          return reply { done: "success" }
 
   server.route
     method: 'POST'
@@ -176,7 +188,6 @@ exports.register = (server, options, next) ->
       return reply Boom.badRequest "No payment information provided" if not
         request.payload.description or not
         request.payload.amount or not
-        request.payload.day or not
         request.payload.id
 
       update = {

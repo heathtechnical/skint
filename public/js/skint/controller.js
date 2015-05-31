@@ -10,23 +10,24 @@
         return $scope.alerts.splice(index, 1);
       };
       $scope.refresh = function(id) {
-        $scope.accountId = id;
-        return Account.get({
-          accountId: id
-        }, function(account) {
-          return $scope.account = account;
+        return Account.getAccounts(function(accounts) {
+          $scope.accounts = accounts;
+          if (!id) {
+            $scope.accountId = accounts[0]._id;
+          } else {
+            $scope.accountId = id;
+          }
+          return Account.get({
+            accountId: $scope.accountId
+          }, function(account) {
+            return $scope.account = account;
+          });
         });
       };
-      console.log(Account.getAccounts);
-      Account.getAccounts(function(accounts) {
-        $scope.accounts = accounts;
-        if (!$routeParams.accountId) {
-          return $scope.refresh(accounts[0]._id);
-        }
-      });
-      return $scope.$on("$routeChangeSuccess", function($currentRoute, $previousRoute) {
+      $scope.$on("$routeChangeSuccess", function($currentRoute, $previousRoute) {
         return $scope.refresh($routeParams.accountId);
       });
+      return $scope.refresh();
     }
   ]);
 
@@ -238,6 +239,67 @@
       };
       return $scope.cancelAccountSettings = function() {
         return $modalInstance.dismiss('cancel');
+      };
+    }
+  ]);
+
+  SkintControllers.directive('skChart', [
+    '$compile', '$http', '$timeout', function($compile, $http, $timeout) {
+      return {
+        restrict: 'A',
+        link: function(scope, element, attrs) {
+          var chart;
+          chart = $(element).highcharts({
+            credits: {
+              enabled: false
+            },
+            chart: {
+              type: 'spline'
+            },
+            title: {
+              text: 'Account Balance Summary'
+            },
+            subtitle: {
+              text: 'All time'
+            },
+            xAxis: {
+              type: 'datetime',
+              dateTimeLabelFormats: {
+                month: '%e. %b',
+                year: '%b'
+              },
+              title: {
+                text: 'Date'
+              }
+            },
+            yAxis: {
+              title: {
+                text: 'Balance'
+              }
+            },
+            tooltip: {
+              formatter: function() {
+                return '<b>' + this.series.name + '</b><br>' + Highcharts.dateFormat('%e %b %Y', new Date(this.x)) + ' £' + this.y;
+              }
+            },
+            series: [
+              {
+                name: 'Account Balance',
+                data: []
+              }
+            ]
+          });
+          return scope.$watch('account', function(account) {
+            var data;
+            if (account) {
+              data = account.historic_balance.map(function(v) {
+                return [new Date(v.date).getTime(), v.balance];
+              });
+              chart = $(element).highcharts();
+              return chart.series[0].setData(data);
+            }
+          });
+        }
       };
     }
   ]);

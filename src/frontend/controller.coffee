@@ -7,19 +7,21 @@ SkintControllers.controller 'AppController', ['$scope', '$route', '$routeParams'
     $scope.alerts.splice(index, 1)
 
   $scope.refresh = (id) ->
-    $scope.accountId = id
+    Account.getAccounts (accounts) ->
+      $scope.accounts = accounts
 
-    Account.get { accountId: id }, (account) ->
-      $scope.account = account
+      if not id
+        $scope.accountId = accounts[0]._id
+      else
+        $scope.accountId = id
 
-  Account.getAccounts (accounts) ->
-    $scope.accounts = accounts
-    if not $routeParams.accountId
-      $scope.refresh(accounts[0]._id)
+      Account.get { accountId: $scope.accountId }, (account) ->
+        $scope.account = account
 
   $scope.$on "$routeChangeSuccess", ($currentRoute, $previousRoute) ->
     $scope.refresh($routeParams.accountId)
 
+   $scope.refresh()
 ]
 
 SkintControllers.controller 'PaymentsCtrl', [ '$scope', '$timeout', 'Account', ($scope, $timeout, Account) ->
@@ -46,7 +48,6 @@ SkintControllers.controller 'PaymentsCtrl', [ '$scope', '$timeout', 'Account', (
     , (err) ->
       $scope.alerts.push { type: "danger", icon: "remove", msg: "Unable to add payment, please try again" }
     )
-
 
   $scope.editPayment = (payment) ->
     angular.forEach($scope.account.payments, (p) -> p.editMode = false)
@@ -153,4 +154,46 @@ SkintControllers.controller 'AccountSettingsCtrl', [ '$scope', '$modalInstance',
 
   $scope.cancelAccountSettings = () ->
     $modalInstance.dismiss 'cancel'
+]
+
+SkintControllers.directive 'skChart', ['$compile', '$http', '$timeout', ($compile, $http, $timeout) ->
+  return {
+    restrict: 'A',
+    link: (scope, element, attrs) ->
+
+      chart = $(element).highcharts {
+        credits: { enabled: false },
+        chart: { type: 'spline' },
+        title: { text: 'Account Balance Summary' },
+        subtitle: { text: 'All time' },
+        xAxis: {
+          type: 'datetime',
+          dateTimeLabelFormats: {
+            month: '%e. %b',
+            year: '%b'
+          },
+          title: { text: 'Date' }
+        },
+        yAxis: { title: { text: 'Balance' } },
+        #tooltip: {
+        #  headerFormat: '<b>{series.name}</b><br>',
+        #  pointFormat: '{point.x}: {point.y:.2f}'
+        #},
+        tooltip: {
+          formatter: () ->
+            return '<b>' + this.series.name + '</b><br>' +
+              Highcharts.dateFormat('%e %b %Y', new Date(this.x)) +
+              ' £' + this.y;
+        },
+        series: [{ name: 'Account Balance', data: [] }]
+      }
+
+      scope.$watch 'account', (account) ->
+        if account
+          data = account.historic_balance.map (v) ->
+            return [new Date(v.date).getTime(), v.balance]
+
+          chart = $(element).highcharts()
+          chart.series[0].setData(data)
+  }
 ]

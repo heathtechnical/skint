@@ -14,7 +14,6 @@
       this.cycleEnd = moment(later.schedule(cycle).next(1));
       this.fuzzyStart = this.cycleStart.from(this.now);
       this.fuzzyEnd = this.cycleEnd.from(this.now);
-      console.log("Cycle: " + this.cycleStart.format() + " - " + this.cycleEnd.format());
       this.payments = [];
     }
 
@@ -23,10 +22,6 @@
       cycle = later.parse.recur().on(day).dayOfMonth();
       prev = moment(later.schedule(cycle).prev(1));
       next = moment(later.schedule(cycle).next(1)).hour(0).minute(0).second(0);
-      if (prev < this.cycleStart && next > this.cycleEnd) {
-        console.log("No Payments Scheduled This Cycle");
-      }
-      console.log("payment[" + description + "] = " + next.format());
       isRemaining = next.isBetween(this.now, this.cycleEnd);
       fuzzy = isRemaining ? next.from(this.now) : prev.from(this.now);
       payment = {

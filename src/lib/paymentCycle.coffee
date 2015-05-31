@@ -12,9 +12,6 @@ class paymentCycle
         @cycleEnd = moment(later.schedule(cycle).next(1))
         @fuzzyStart = @cycleStart.from(@now)
         @fuzzyEnd = @cycleEnd.from(@now)
-
-        console.log "Cycle: " + @cycleStart.format() + " - " + @cycleEnd.format()
-
         @payments = []
 
     addPayment: (day, description, amount) ->
@@ -22,12 +19,9 @@ class paymentCycle
         prev = moment(later.schedule(cycle).prev(1))
         next = moment(later.schedule(cycle).next(1)).hour(0).minute(0).second(0)
 
-        if prev < @cycleStart and next > @cycleEnd
-            console.log "No Payments Scheduled This Cycle"
+	#if prev < @cycleStart and next > @cycleEnd
+	#    console.log "No Payments Scheduled This Cycle"
     
-
-        console.log "payment[" + description + "] = " + next.format()
-
         isRemaining = next.isBetween(@now, @cycleEnd)
         fuzzy = if isRemaining then next.from(@now) else prev.from(@now)
 
