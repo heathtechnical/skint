@@ -43,3 +43,5 @@ Download and install dependencies:
     # cd skint
     # npm install
     # npm start
+
+The application is then available at: http://server:3001.
