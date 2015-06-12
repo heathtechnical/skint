@@ -1,7 +1,7 @@
 {
   "name": "skint",
   "version": "0.0.1",
-  "description": "skint.io",
+  "description": "Skint - Dead simple money tracking",
   "main": "index.js",
   "scripts": {
     "test": "./node_modules/lab/bin/lab -c"
