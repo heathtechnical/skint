@@ -3,7 +3,7 @@ mongo = require 'mongoskin'
 Boom = require 'boom'
 util = require 'util'
 
-db = mongo.db "mongodb://localhost/skint-mt-dev", native_parser: true
+db = mongo.db "mongodb://localhost/skint-mt", native_parser: true
 db.bind "collection"
 
 exports.register = (server, options, next) ->
@@ -195,7 +195,7 @@ exports.register = (server, options, next) ->
         'payments.$.amount': parseFloat(request.payload.amount)
       }
 
-      if request.payload.type == "scheduled"
+      if request.payload.day
         update['payments.$.day'] = parseInt(request.payload.day)
 
       db.collection.update {

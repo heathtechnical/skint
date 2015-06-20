@@ -9,7 +9,7 @@
 
   util = require('util');
 
-  db = mongo.db("mongodb://localhost/skint-mt-dev", {
+  db = mongo.db("mongodb://localhost/skint-mt", {
     native_parser: true
   });
 
@@ -249,7 +249,7 @@
           'payments.$.description': request.payload.description,
           'payments.$.amount': parseFloat(request.payload.amount)
         };
-        if (request.payload.type === "scheduled") {
+        if (request.payload.day) {
           update['payments.$.day'] = parseInt(request.payload.day);
         }
         return db.collection.update({
