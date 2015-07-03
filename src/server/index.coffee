@@ -3,7 +3,7 @@ mongo = require 'mongoskin'
 Boom = require 'boom'
 util = require 'util'
 
-db = mongo.db "mongodb://localhost/skint-mt", native_parser: true
+db = mongo.db "mongodb://localhost/skint-mt-dev", native_parser: true
 db.bind "collection"
 
 exports.register = (server, options, next) ->
@@ -36,6 +36,16 @@ exports.register = (server, options, next) ->
           return reply Boom.badRequest "Database error"
 
         return reply { "success": "yes", "account_id": docs[0]['_id'] }
+
+  server.route
+    method: 'DELETE',
+    path: '/account/{id}',
+    handler: (request, reply) ->
+      db.collection.removeById request.params.id, (err, item) ->
+        return reply Boom.badRequest "Database error" if err
+        return reply Boom.badRequest "Not found" if not item
+
+        return reply { "success": "yes" }
 
   server.route
     method: 'GET',

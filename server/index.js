@@ -9,7 +9,7 @@
 
   util = require('util');
 
-  db = mongo.db("mongodb://localhost/skint-mt", {
+  db = mongo.db("mongodb://localhost/skint-mt-dev", {
     native_parser: true
   });
 
@@ -43,6 +43,23 @@
           return reply({
             "success": "yes",
             "account_id": docs[0]['_id']
+          });
+        });
+      }
+    });
+    server.route({
+      method: 'DELETE',
+      path: '/account/{id}',
+      handler: function(request, reply) {
+        return db.collection.removeById(request.params.id, function(err, item) {
+          if (err) {
+            return reply(Boom.badRequest("Database error"));
+          }
+          if (!item) {
+            return reply(Boom.badRequest("Not found"));
+          }
+          return reply({
+            "success": "yes"
           });
         });
       }

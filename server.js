@@ -15,7 +15,7 @@
   });
 
   server.connection({
-    port: 3001
+    port: 3004
   });
 
   module.exports = server;
