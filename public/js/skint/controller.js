@@ -187,6 +187,19 @@
 
   SkintControllers.controller('AccountSettingsCtrl', [
     '$scope', '$modalInstance', 'Account', function($scope, $modalInstance, Account) {
+      $scope.deleteAccount = function() {
+        return Account["delete"]({
+          accountId: $scope.accountId
+        }, function(success) {
+          $scope.alerts.push({
+            type: "success",
+            icon: "ok",
+            msg: "Account removed successfully"
+          });
+          $modalInstance.dismiss('cancel');
+          return $scope.refresh();
+        });
+      };
       $scope.saveAccountSettings = function() {
         if ($scope.params.is_new) {
           Account.save({

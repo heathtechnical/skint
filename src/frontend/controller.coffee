@@ -126,6 +126,13 @@ SkintControllers.controller 'AccountsCtrl', [ '$scope', '$timeout', '$modal', 'A
 ]
 
 SkintControllers.controller 'AccountSettingsCtrl', [ '$scope', '$modalInstance', 'Account', ($scope, $modalInstance, Account) ->
+  $scope.deleteAccount = () ->
+    Account.delete({ accountId: $scope.accountId }, (success) ->
+      $scope.alerts.push { type: "success", icon: "ok", msg: "Account removed successfully" }
+      $modalInstance.dismiss 'cancel'
+      $scope.refresh()
+    )
+
   $scope.saveAccountSettings = () ->
     if $scope.params.is_new
       Account.save({
